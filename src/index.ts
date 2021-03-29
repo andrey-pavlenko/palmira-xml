@@ -1,16 +1,20 @@
 import App from './App.svelte';
 
-var app = new App({
-  target: document.body,
-});
+const target = document.querySelector('main');
 
-export default app;
-
-// Hot Module Replacement (HMR) - Remove this snippet to remove HMR.
-// Learn more: https://www.snowpack.dev/concepts/hot-module-replacement
-if (import.meta.hot) {
-  import.meta.hot.accept();
-  import.meta.hot.dispose(() => {
-    app.$destroy();
+if (target != null) {
+  const app = new App({
+    target: document.body
   });
+
+  // Hot Module Replacement (HMR) - Remove this snippet to remove HMR.
+  // Learn more: https://www.snowpack.dev/concepts/hot-module-replacement
+  if (import.meta.hot) {
+    import.meta.hot.accept();
+    import.meta.hot.dispose(() => {
+      app.$destroy();
+    });
+  }
+} else {
+  console.error('No target tag found');
 }

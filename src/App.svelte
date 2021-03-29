@@ -1,70 +1,67 @@
-<script lang='typescript'>
-	import {onMount} from 'svelte';
-	let count: number = 0;
-	onMount(() => {
-	  const interval = setInterval(() => count++, 1000);
-	  return () => {
-		clearInterval(interval);
-	  };
-	});
-  </script>
-  
-  <style>
-	:global(body) {
-	  margin: 0;
-	  font-family: Arial, Helvetica, sans-serif;
-	}
-	.App {
-	  text-align: center;
-	}
-	.App code {
-	  background: #0002;
-	  padding: 4px 8px;
-	  border-radius: 4px;
-	}
-	.App p {
-	  margin: 0.4rem;
-	}
-  
-	.App-header {
-	  background-color: #f9f6f6;
-	  color: #333;
-	  min-height: 100vh;
-	  display: flex;
-	  flex-direction: column;
-	  align-items: center;
-	  justify-content: center;
-	  font-size: calc(10px + 2vmin);
-	}
-	.App-link {
-	  color: #ff3e00;
-	}
-	.App-logo {
-	  height: 36vmin;
-	  pointer-events: none;
-	  margin-bottom: 3rem;
-	  animation: App-logo-spin infinite 1.6s ease-in-out alternate;
-	}
-	@keyframes App-logo-spin {
-	  from {
-		transform: scale(1);
-	  }
-	  to {
-		transform: scale(1.06);
-	  }
-	}
-  </style>
-  
-  <div class="App">
-	<header class="App-header">
-	  <img src="/logo.svg" class="App-logo" alt="logo" />
-	  <p>Edit <code>src/App.svelte</code> and save to reload.</p>
-	  <p>Page has been open for <code>{count}</code> seconds.</p>
-	  <p>
-		<a class="App-link" href="https://svelte.dev" target="_blank" rel="noopener noreferrer">
-		  Learn Svelte
-		</a>
-	  </p>
-	</header>
-  </div>
-  
+<script lang="ts">
+  import { generateXml } from './generate-xml';
+  let barcodes: string[] = [];
+
+  function handleBarcodeSubmit(event: Event) {
+    if (event.target instanceof HTMLFormElement) {
+      const barcodeElement = event.target.elements.namedItem('barcode') as HTMLInputElement | null;
+      if (barcodeElement != null) {
+        const barcode = barcodeElement.value.trim();
+        if (barcode) {
+          barcodes = [...barcodes, barcode];
+        } else {
+          console.error('barcode пустой');
+        }
+        barcodeElement.value = '';
+        barcodeElement.focus();
+      } else {
+        console.error('barcodeElement пустой');
+      }
+    }
+  }
+
+  function removeBarcode(index: number) {
+    barcodes = [...barcodes.slice(0, index), ...barcodes.slice(index + 1)];
+  }
+
+  function handleGenerateXml() {
+    console.info('handleGenerateXml', barcodes);
+    const xml = generateXml(barcodes);
+    if (xml) {
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(xml);
+      a.download = 'file.txt';
+      a.click();
+      document.body.removeChild(a);
+    }
+  }
+
+  function actionFocus(node: HTMLInputElement) {
+    node.focus();
+  }
+
+  // $: console.info(barcodes);
+</script>
+
+<div class="application">
+  <form class="barcode__input" on:submit|preventDefault="{handleBarcodeSubmit}">
+    <label>
+      <span>Сюда попадает штрих-код:</span>
+      <input type="text" name="barcode" required use:actionFocus />
+    </label>
+    <input type="submit" value="Добавить" />
+  </form>
+  <ul class="barcodes__list">
+    {#each barcodes as code, idx}
+      <li>
+        <code>{code}</code>
+        <button on:click="{() => removeBarcode(idx)}">Удалить</button>
+      </li>
+    {:else}
+      <li>Пока нет кодов</li>
+    {/each}
+  </ul>
+  <button on:click="{handleGenerateXml}">Подготовить XML</button>
+</div>
